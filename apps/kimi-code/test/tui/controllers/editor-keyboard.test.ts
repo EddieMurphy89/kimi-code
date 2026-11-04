@@ -24,6 +24,9 @@ interface Harness {
     readonly handleEditorChange: ReturnType<typeof vi.fn<(text: string) => void>>;
     readonly notifyDisplaced: ReturnType<typeof vi.fn<() => void>>;
   };
+  readonly prediction: {
+    readonly handlePreInput: ReturnType<typeof vi.fn<(data: string) => boolean>>;
+  };
 }
 
 function createHarness(options: { streamingPhase?: string; isCompacting?: boolean } = {}): Harness {
@@ -46,6 +49,11 @@ function createHarness(options: { streamingPhase?: string; isCompacting?: boolea
     handleEditorChange: vi.fn<(text: string) => void>(() => {}),
     notifyDisplaced: vi.fn<() => void>(() => {}),
   };
+  const prediction = {
+    handlePreInput: vi.fn<(data: string) => boolean>(() => false),
+    handleSubmit: vi.fn<(text: string) => void>(() => {}),
+    handleEditorChange: vi.fn<(text: string) => void>(() => {}),
+  };
   const session = { cancel: vi.fn(async () => {}), cancelCompaction };
 
   const host = {
@@ -63,6 +71,7 @@ function createHarness(options: { streamingPhase?: string; isCompacting?: boolea
     session,
     btwPanelController: { cancelRunning: btwCancelRunning, closeOrCancel: btwCloseOrCancel },
     surveyController: survey,
+    promptPredictionController: prediction,
     openUndoSelector,
     cancelRunningShellCommand,
     updateEditorBorderHighlight: vi.fn(),
@@ -92,6 +101,7 @@ function createHarness(options: { streamingPhase?: string; isCompacting?: boolea
     footerHint,
     stop,
     survey,
+    prediction,
   };
 }
 
@@ -128,22 +138,16 @@ describe('EditorKeyboardController double-Esc undo', () => {
     vi.useRealTimers();
   });
 
-  it('opens the undo selector when Esc is pressed twice within the window while idle', () => {
-    const { editor, openUndoSelector } = createHarness();
+  it('opens the undo selector only for two Esc presses within the window while idle', () => {
+    const single = createHarness();
+    pressEscape(single.editor);
+    expect(single.openUndoSelector).not.toHaveBeenCalled();
 
+    const { editor, openUndoSelector } = createHarness();
     pressEscape(editor);
     expect(openUndoSelector).not.toHaveBeenCalled();
-
     pressEscape(editor);
     expect(openUndoSelector).toHaveBeenCalledOnce();
-  });
-
-  it('does nothing for a single Esc while idle', () => {
-    const { editor, openUndoSelector } = createHarness();
-
-    pressEscape(editor);
-
-    expect(openUndoSelector).not.toHaveBeenCalled();
   });
 
   it('does not trigger when the second Esc arrives after the window expires', () => {
@@ -666,15 +670,17 @@ describe('EditorKeyboardController survey wiring', () => {
   });
 
   it('routes raw keys to the survey pre-input hook first', () => {
-    const { editor, survey } = createHarness();
+    const { editor, survey, prediction } = createHarness();
     const onPreInput = editor['onPreInput'] as unknown as (data: string) => boolean;
 
     survey.handlePreInput.mockReturnValueOnce(true);
     expect(onPreInput('\u001B[D')).toBe(true);
     expect(survey.handlePreInput).toHaveBeenCalledWith('\u001B[D');
+    expect(prediction.handlePreInput).not.toHaveBeenCalled();
 
     survey.handlePreInput.mockReturnValueOnce(false);
     expect(onPreInput('x')).toBe(false);
+    expect(prediction.handlePreInput).toHaveBeenCalledWith('x');
   });
 
   it('forwards editor text changes to the survey', () => {

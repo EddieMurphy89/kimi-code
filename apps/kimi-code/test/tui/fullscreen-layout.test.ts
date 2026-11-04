@@ -129,6 +129,7 @@ function updateQueueDisplay(state: ReturnType<typeof createTUIState>): void {
     state,
     deferUserMessages: false,
     isSteeringQueuedMessages: () => false,
+    promptPredictionController: { handleQueueChange() {}, notifyDisplaced() {} },
   } as unknown as KimiTUI;
   KimiTUI.prototype.updateQueueDisplay.call(host);
 }
@@ -1268,6 +1269,7 @@ describe('fullscreen layout', () => {
       state,
       session: {},
       surveyController: { notifyDisplaced: () => {} },
+      promptPredictionController: { handleQueueChange() {}, notifyDisplaced() {} },
       disposeEditorReplacement() {},
       modelMigration: { retry: () => {} },
       showError: vi.fn(),
@@ -1365,6 +1367,7 @@ describe('fullscreen layout', () => {
     const host = {
       state,
       surveyController: { notifyDisplaced: () => {} },
+      promptPredictionController: { handleQueueChange() {}, notifyDisplaced() {} },
       disposeEditorReplacement() {},
     } as unknown as KimiTUI;
     KimiTUI.prototype.mountEditorReplacement.call(host, picker);
@@ -1433,6 +1436,7 @@ describe('fullscreen layout', () => {
     const host = {
       state,
       surveyController: { notifyDisplaced: () => {} },
+      promptPredictionController: { handleQueueChange() {}, notifyDisplaced() {} },
       disposeEditorReplacement() {},
       modelMigration: { retry: () => {} },
     } as unknown as KimiTUI;

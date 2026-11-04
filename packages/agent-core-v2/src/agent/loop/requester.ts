@@ -941,6 +941,7 @@ function toolSignature(tools: readonly Tool[]): readonly LlmRequestToolSchema[] 
 function requestKindForRecord(fields: AgentLLMRequestLogFields): LlmRequestPayload['kind'] {
   if (fields['kind'] === 'compaction') return 'compaction';
   if (fields['requestKind'] === 'full_compaction') return 'compaction';
+  if (fields['requestKind'] === 'prompt_prediction') return 'prediction';
   return 'loop';
 }
 
