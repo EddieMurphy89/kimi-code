@@ -50,6 +50,7 @@ export class WorkspaceDirsService implements IWorkspaceDirs {
   readonly onDidChange: Event<void> = this.onDidChangeEmitter.event;
   private readonly watchDebounce = this._register(new TimeoutTimer());
   private mutationTail: Promise<void> = Promise.resolve();
+  private registryReloadQueued = false;
   private changeBatchDepth = 0;
   private changePending = false;
 
@@ -82,7 +83,12 @@ export class WorkspaceDirsService implements IWorkspaceDirs {
     }
     this._register(
       this.workspaceStore.onDidChange(() => {
-        void this.enqueue(() => this.reloadFromRegistry()).catch((error) => {
+        if (this.registryReloadQueued) return;
+        this.registryReloadQueued = true;
+        void this.enqueue(async () => {
+          this.registryReloadQueued = false;
+          await this.reloadFromRegistry();
+        }).catch((error) => {
           this.log.warn(`workspace registry reload failed: ${String(error)}`);
         });
       }),
