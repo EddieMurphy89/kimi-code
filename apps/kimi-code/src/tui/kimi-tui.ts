@@ -2113,6 +2113,7 @@ export class KimiTUI {
   }
 
   beginSessionRequest(): void {
+    this.streamingUI.timeline.turnStarted();
     this.cacheHint.onTurnBegin();
     this.streamingUI.setTurnId(undefined);
     this.streamingUI.resetLiveText();
@@ -2131,6 +2132,7 @@ export class KimiTUI {
   }
 
   failSessionRequest(message: string): void {
+    this.streamingUI.timeline.turnEnded();
     this.programStatus.failRequest(message);
     this.setAppState({ streamingPhase: 'idle' });
     this.resetLivePane();
@@ -2487,6 +2489,7 @@ export class KimiTUI {
   }): boolean {
     const { session, error, entries, retried, retry, restore } = args;
     if (this.session?.id !== session.id || !isSessionOccupiedError(error)) return false;
+    this.streamingUI.timeline.turnEnded();
     if (entries !== undefined) this.removeTranscriptEntries(entries);
     this.setAppState({ streamingPhase: 'idle' });
     this.resetLivePane();
@@ -3520,6 +3523,7 @@ export class KimiTUI {
         },
         () => this.resolveApprovalEnvironment(),
         this.programStatus,
+        this.streamingUI.timeline,
       ),
     );
     session.setQuestionHandler(
@@ -4088,6 +4092,7 @@ export class KimiTUI {
     this.sessionEventHandler.stopAllMcpServerStatusSpinners();
     this.disposeTranscriptChildren();
     this.state.transcriptContainer.clear();
+    this.streamingUI.timeline.reset();
     this.btwPanelController.clear();
     this.clearTerminalInlineImages();
     this.sessionEventHandler.notifications.clear();
