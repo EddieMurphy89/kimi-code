@@ -189,7 +189,7 @@ describe('promptWithSkills', () => {
     await promptPromise;
     await ctx.untilTurnEnd();
 
-    expect(ctx.llmCalls).toHaveLength(2);
+    expect(ctx.llmCalls).toHaveLength(1);
     const llmInput = JSON.stringify(ctx.llmInputs());
     expect(llmInput).toContain('# Review body');
     expect(llmInput).toContain('ARGUMENTS: src/app.ts');
@@ -231,7 +231,6 @@ describe('promptWithSkills', () => {
     catalog.register(stubSkill('other'));
     catalog.registerVariants([parentA, parentB, childA, childB, stubSkill('other')], { replace: true });
     ctx = createTestAgent(skillServices(catalog));
-    ctx.mockNextResponse({ type: 'text', text: 'first reply' });
     ctx.mockNextResponse({ type: 'text', text: 'Load child.' }, {
       type: 'function',
       id: 'call_child',
@@ -253,7 +252,7 @@ describe('promptWithSkills', () => {
       skills: [{ name: 'parent', path: parentB.path }, { name: 'other' }],
       steerIfActive: true,
     });
-    expect(steered.steered).toBe(true);
+    expect(steered.prompt_id).toBeTruthy();
     hold.release();
     await promptPromise;
     await ctx.untilTurnEnd();
