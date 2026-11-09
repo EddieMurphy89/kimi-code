@@ -143,6 +143,7 @@ import {
   isWorkDirKey,
   workspaceRootKey,
 } from '@moonshot-ai/agent-core-v2/_base/utils/workdir-slug';
+import type { PromptPredictionCancelReason } from '@moonshot-ai/agent-core-v2/features/promptPrediction/promptPrediction';
 import { McpConnectionManager } from '@moonshot-ai/agent-core-v2/mcpCore/connection-manager';
 import { ITowerRateLimitService } from '@moonshot-ai/agent-core-v2/features/tower/towerRateLimit';
 import { readTowerStatusSummary } from '@moonshot-ai/agent-core-v2/features/tower/tools/status/statusReader';
@@ -2608,9 +2609,10 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
   override async cancelPromptPrediction(input: {
     sessionId: string;
     predictionId: string;
+    reason?: PromptPredictionCancelReason;
   }): Promise<boolean> {
     this.requireLiveSession(input.sessionId);
-    return this.klient.session(input.sessionId).cancelPromptPrediction(input.predictionId);
+    return this.klient.session(input.sessionId).cancelPromptPrediction(input.predictionId, input.reason);
   }
 
   /**
